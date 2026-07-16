@@ -5,16 +5,12 @@ public sealed class StageSpawnController : MonoBehaviour
 {
     [SerializeField] private List<CharacterSpawnEntry> _spawnEntries = new List<CharacterSpawnEntry>();
 
-    private readonly List<RegisteredCombatant> _spawnedCombatants = new List<RegisteredCombatant>();
-    private CombatantRegistry _registry;
-    private CharacterSpawner _spawner;
-
     private void Start()
     {
-        _registry = new CombatantRegistry();
+        CombatantRegistry registry = new CombatantRegistry();
         DifferentTeamRelationshipService relationshipService = new DifferentTeamRelationshipService();
         NearestEnemyTargetSelector targetSelector = new NearestEnemyTargetSelector();
-        _spawner = new CharacterSpawner(_registry, targetSelector, relationshipService);
+        CharacterSpawner spawner = new CharacterSpawner(registry, targetSelector, relationshipService);
 
         for (int i = 0; i < _spawnEntries.Count; i++)
         {
@@ -25,25 +21,7 @@ public sealed class StageSpawnController : MonoBehaviour
                 continue;
             }
 
-            RegisteredCombatant spawned = _spawner.Spawn(entry);
-            if (spawned != null)
-            {
-                _spawnedCombatants.Add(spawned);
-            }
+            spawner.Spawn(entry);
         }
-    }
-
-    private void OnDestroy()
-    {
-        for (int i = 0; i < _spawnedCombatants.Count; i++)
-        {
-            RegisteredCombatant combatant = _spawnedCombatants[i];
-            if (combatant != null)
-            {
-                Object.Destroy(combatant.gameObject);
-            }
-        }
-
-        _spawnedCombatants.Clear();
     }
 }

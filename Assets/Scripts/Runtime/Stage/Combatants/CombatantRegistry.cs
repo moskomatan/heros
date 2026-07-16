@@ -1,10 +1,17 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 public sealed class CombatantRegistry : ICombatantRegistry
 {
     private readonly List<RegisteredCombatant> _combatants = new List<RegisteredCombatant>();
+    private readonly ReadOnlyCollection<RegisteredCombatant> _readOnlyCombatants;
 
-    public IReadOnlyList<RegisteredCombatant> Combatants => _combatants;
+    public CombatantRegistry()
+    {
+        _readOnlyCombatants = _combatants.AsReadOnly();
+    }
+
+    public IReadOnlyList<RegisteredCombatant> Combatants => _readOnlyCombatants;
 
     public void Register(RegisteredCombatant combatant)
     {

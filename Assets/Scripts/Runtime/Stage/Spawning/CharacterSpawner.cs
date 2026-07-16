@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class CharacterSpawner
@@ -11,9 +12,9 @@ public sealed class CharacterSpawner
         ITargetSelector targetSelector,
         ITeamRelationshipService relationshipService)
     {
-        _registry = registry;
-        _targetSelector = targetSelector;
-        _relationshipService = relationshipService;
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        _targetSelector = targetSelector ?? throw new ArgumentNullException(nameof(targetSelector));
+        _relationshipService = relationshipService ?? throw new ArgumentNullException(nameof(relationshipService));
     }
 
     public RegisteredCombatant Spawn(CharacterSpawnEntry entry)
@@ -36,7 +37,14 @@ public sealed class CharacterSpawner
             return null;
         }
 
-        GameObject instance = Object.Instantiate(
+        if (entry.Team == TeamId.Neutral)
+        {
+            Debug.LogWarning(
+                $"{nameof(CharacterSpawner)} is spawning neutral combatant from prefab '{entry.Prefab.name}'. " +
+                "Neutral combatants are not treated as enemies by bots.");
+        }
+
+        GameObject instance = UnityEngine.Object.Instantiate(
             entry.Prefab,
             entry.SpawnPoint.position,
             entry.SpawnPoint.rotation);
@@ -50,7 +58,7 @@ public sealed class CharacterSpawner
             Debug.LogError(
                 $"{nameof(CharacterSpawner)} failed to spawn {entry.Prefab.name}: missing {nameof(TeamMember)}.",
                 instance);
-            Object.Destroy(instance);
+            UnityEngine.Object.Destroy(instance);
             return null;
         }
 
@@ -59,7 +67,7 @@ public sealed class CharacterSpawner
             Debug.LogError(
                 $"{nameof(CharacterSpawner)} failed to spawn {entry.Prefab.name}: missing {nameof(RegisteredCombatant)}.",
                 instance);
-            Object.Destroy(instance);
+            UnityEngine.Object.Destroy(instance);
             return null;
         }
 

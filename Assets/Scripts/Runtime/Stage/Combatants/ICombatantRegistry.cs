@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 public interface ICombatantRegistry
 {
-    IReadOnlyList<RegisteredCombatant> Combatants { get; }
+    IReadOnlyList<ICombatant> Combatants { get; }
 
-    void Register(RegisteredCombatant combatant);
+    void Register(ICombatant combatant);
 
-    void Unregister(RegisteredCombatant combatant);
+    void Unregister(ICombatant combatant);
 }

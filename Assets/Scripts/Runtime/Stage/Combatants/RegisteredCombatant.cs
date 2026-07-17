@@ -1,10 +1,10 @@
 using UnityEngine;
 
-public sealed class RegisteredCombatant : MonoBehaviour
+public sealed class RegisteredCombatant : MonoBehaviour, ICombatant
 {
     [SerializeField] private CombatCharacter _character;
-    [SerializeField] private TeamMember _teamMember;
     [SerializeField] private Transform _targetTransform;
+    [SerializeField] private TeamMember _teamMember = new TeamMember();
 
     private ICombatantRegistry _registry;
     private bool _isInitialized;
@@ -54,13 +54,15 @@ public sealed class RegisteredCombatant : MonoBehaviour
         ValidateReferences();
     }
 
-    public void Initialize(ICombatantRegistry registry)
+    public void Initialize(ICombatantRegistry registry, TeamId team)
     {
         if (registry == null)
         {
             Debug.LogError($"{nameof(RegisteredCombatant)} on {name} received a null registry.", this);
             return;
         }
+
+        _teamMember.SetTeam(team);
 
         if (_isInitialized)
         {
@@ -95,11 +97,6 @@ public sealed class RegisteredCombatant : MonoBehaviour
         {
             _character = GetComponent<CombatCharacter>();
         }
-
-        if (_teamMember == null)
-        {
-            _teamMember = GetComponent<TeamMember>();
-        }
     }
 
     private void ValidateReferences()
@@ -108,13 +105,6 @@ public sealed class RegisteredCombatant : MonoBehaviour
         {
             Debug.LogError(
                 $"{nameof(RegisteredCombatant)} on {name} requires a {nameof(CombatCharacter)} reference.",
-                this);
-        }
-
-        if (_teamMember == null)
-        {
-            Debug.LogError(
-                $"{nameof(RegisteredCombatant)} on {name} requires a {nameof(TeamMember)} reference.",
                 this);
         }
     }

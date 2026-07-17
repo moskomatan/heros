@@ -2,8 +2,8 @@ using System.Collections.Generic;
 
 public interface ITargetSelector
 {
-    RegisteredCombatant SelectTarget(
-        RegisteredCombatant observer,
-        IReadOnlyList<RegisteredCombatant> candidates,
+    ICombatant SelectTarget(
+        ICombatant observer,
+        IReadOnlyList<ICombatant> candidates,
         ITeamRelationshipService relationshipService);
 }

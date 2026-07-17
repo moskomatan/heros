@@ -127,6 +127,7 @@ ehthumbs.db
 Desktop.ini
 
 # Cursor: Unity Developer Tools (local symlinks, not part of the game)
+.cursor/
 /.cursor-plugin
 /skills
 /rules

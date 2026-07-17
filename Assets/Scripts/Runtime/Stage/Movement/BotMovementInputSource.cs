@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public sealed class BotMovementInputSource : MonoBehaviour, IMovementInputSource
+public sealed class BotMovementInputSource : MonoBehaviour, IMovementInputSource, IChaseTarget
 {
     [SerializeField] private Transform _target;
 

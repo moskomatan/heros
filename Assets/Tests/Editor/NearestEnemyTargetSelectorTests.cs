@@ -7,7 +7,7 @@ public sealed class NearestEnemyTargetSelectorTests
 {
     private NearestEnemyTargetSelector _selector;
     private DifferentTeamRelationshipService _relationshipService;
-    private readonly List<GameObject> _createdObjects = new List<GameObject>();
+    private readonly IList<GameObject> _createdObjects = new List<GameObject>();
 
     [SetUp]
     public void SetUp()
@@ -19,11 +19,11 @@ public sealed class NearestEnemyTargetSelectorTests
     [TearDown]
     public void TearDown()
     {
-        for (int i = 0; i < _createdObjects.Count; i++)
+        foreach (GameObject createdObject in _createdObjects)
         {
-            if (_createdObjects[i] != null)
+            if (createdObject != null)
             {
-                Object.DestroyImmediate(_createdObjects[i]);
+                Object.DestroyImmediate(createdObject);
             }
         }
 
@@ -34,9 +34,9 @@ public sealed class NearestEnemyTargetSelectorTests
     public void SelectTarget_ExcludesSelf()
     {
         RegisteredCombatant observer = CreateCombatant(TeamId.TeamOne, Vector3.zero);
-        List<RegisteredCombatant> candidates = new List<RegisteredCombatant> { observer };
+        List<ICombatant> candidates = new List<ICombatant> { observer };
 
-        RegisteredCombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
+        ICombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
 
         Assert.That(selected, Is.Null);
     }
@@ -46,9 +46,9 @@ public sealed class NearestEnemyTargetSelectorTests
     {
         RegisteredCombatant observer = CreateCombatant(TeamId.TeamOne, Vector3.zero);
         RegisteredCombatant ally = CreateCombatant(TeamId.TeamOne, new Vector3(1f, 0f, 0f));
-        List<RegisteredCombatant> candidates = new List<RegisteredCombatant> { observer, ally };
+        List<ICombatant> candidates = new List<ICombatant> { observer, ally };
 
-        RegisteredCombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
+        ICombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
 
         Assert.That(selected, Is.Null);
     }
@@ -58,9 +58,9 @@ public sealed class NearestEnemyTargetSelectorTests
     {
         RegisteredCombatant observer = CreateCombatant(TeamId.TeamOne, Vector3.zero);
         RegisteredCombatant neutral = CreateCombatant(TeamId.Neutral, new Vector3(1f, 0f, 0f));
-        List<RegisteredCombatant> candidates = new List<RegisteredCombatant> { observer, neutral };
+        List<ICombatant> candidates = new List<ICombatant> { observer, neutral };
 
-        RegisteredCombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
+        ICombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
 
         Assert.That(selected, Is.Null);
     }
@@ -71,9 +71,9 @@ public sealed class NearestEnemyTargetSelectorTests
         RegisteredCombatant observer = CreateCombatant(TeamId.TeamOne, Vector3.zero);
         RegisteredCombatant enemy = CreateCombatant(TeamId.TeamTwo, new Vector3(1f, 0f, 0f));
         enemy.enabled = false;
-        List<RegisteredCombatant> candidates = new List<RegisteredCombatant> { observer, enemy };
+        List<ICombatant> candidates = new List<ICombatant> { observer, enemy };
 
-        RegisteredCombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
+        ICombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
 
         Assert.That(selected, Is.Null);
     }
@@ -84,9 +84,9 @@ public sealed class NearestEnemyTargetSelectorTests
         RegisteredCombatant observer = CreateCombatant(TeamId.TeamOne, Vector3.zero);
         RegisteredCombatant farEnemy = CreateCombatant(TeamId.TeamTwo, new Vector3(10f, 0f, 0f));
         RegisteredCombatant nearEnemy = CreateCombatant(TeamId.TeamTwo, new Vector3(2f, 0f, 0f));
-        List<RegisteredCombatant> candidates = new List<RegisteredCombatant> { observer, farEnemy, nearEnemy };
+        List<ICombatant> candidates = new List<ICombatant> { observer, farEnemy, nearEnemy };
 
-        RegisteredCombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
+        ICombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
 
         Assert.That(selected, Is.SameAs(nearEnemy));
     }
@@ -95,9 +95,9 @@ public sealed class NearestEnemyTargetSelectorTests
     public void SelectTarget_NoEnemyAvailable_ReturnsNull()
     {
         RegisteredCombatant observer = CreateCombatant(TeamId.TeamOne, Vector3.zero);
-        List<RegisteredCombatant> candidates = new List<RegisteredCombatant> { observer };
+        List<ICombatant> candidates = new List<ICombatant> { observer };
 
-        RegisteredCombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
+        ICombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
 
         Assert.That(selected, Is.Null);
     }
@@ -108,14 +108,14 @@ public sealed class NearestEnemyTargetSelectorTests
         RegisteredCombatant observer = CreateCombatant(TeamId.TeamOne, Vector3.zero);
         RegisteredCombatant firstEnemy = CreateCombatant(TeamId.TeamTwo, new Vector3(3f, 0f, 0f));
         RegisteredCombatant secondEnemy = CreateCombatant(TeamId.TeamTwo, new Vector3(3f, 0f, 0f));
-        List<RegisteredCombatant> candidates = new List<RegisteredCombatant>
+        List<ICombatant> candidates = new List<ICombatant>
         {
             observer,
             firstEnemy,
             secondEnemy
         };
 
-        RegisteredCombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
+        ICombatant selected = _selector.SelectTarget(observer, candidates, _relationshipService);
 
         Assert.That(selected, Is.SameAs(firstEnemy));
     }
@@ -129,14 +129,13 @@ public sealed class NearestEnemyTargetSelectorTests
 
         KeyboardMovementInputSource input = gameObject.AddComponent<KeyboardMovementInputSource>();
         CombatCharacter character = gameObject.AddComponent<CombatCharacter>();
-        TeamMember teamMember = gameObject.AddComponent<TeamMember>();
         RegisteredCombatant registeredCombatant = gameObject.AddComponent<RegisteredCombatant>();
 
         SerializedObject characterSerializedObject = new SerializedObject(character);
         characterSerializedObject.FindProperty("_inputSourceBehaviour").objectReferenceValue = input;
         characterSerializedObject.ApplyModifiedPropertiesWithoutUndo();
 
-        teamMember.SetTeam(team);
+        registeredCombatant.Initialize(new CombatantRegistry(), team);
         gameObject.SetActive(true);
 
         Assert.That(registeredCombatant.IsTargetable, Is.True);

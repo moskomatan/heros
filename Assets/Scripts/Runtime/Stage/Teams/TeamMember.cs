@@ -1,6 +1,8 @@
+using System;
 using UnityEngine;
 
-public sealed class TeamMember : MonoBehaviour, ITeamMember
+[Serializable]
+public sealed class TeamMember : ITeamMember
 {
     [SerializeField] private TeamId _team;
 

@@ -30,8 +30,8 @@ public sealed class BotTargetController
 
     public void Tick(float deltaTime)
     {
-        if (_observer == null ||
-            _chaseTarget == null ||
+        if (!IsAlive(_observer) ||
+            !IsAlive(_chaseTarget) ||
             _registry == null ||
             _targetSelector == null ||
             _relationshipService == null)
@@ -39,7 +39,7 @@ public sealed class BotTargetController
             return;
         }
 
-        if (_currentTarget != null && !IsValidTarget(_currentTarget))
+        if (IsAlive(_currentTarget) && !IsValidTarget(_currentTarget))
         {
             ClearTarget();
         }
@@ -68,12 +68,12 @@ public sealed class BotTargetController
             _relationshipService);
 
         _currentTarget = selected;
-        _chaseTarget.Target = selected != null ? selected.TargetTransform : null;
+        _chaseTarget.Target = IsAlive(selected) ? selected.TargetTransform : null;
     }
 
     private bool IsValidTarget(ICombatant target)
     {
-        if (target == null || !target.IsTargetable || _observer == null)
+        if (!IsAlive(target) || !target.IsTargetable || !IsAlive(_observer))
         {
             return false;
         }
@@ -85,9 +85,24 @@ public sealed class BotTargetController
     {
         _currentTarget = null;
 
-        if (_chaseTarget != null)
+        if (IsAlive(_chaseTarget))
         {
             _chaseTarget.Target = null;
         }
+    }
+
+    private static bool IsAlive(object value)
+    {
+        if (value == null)
+        {
+            return false;
+        }
+
+        if (value is Object unityObject)
+        {
+            return unityObject != null;
+        }
+
+        return true;
     }
 }

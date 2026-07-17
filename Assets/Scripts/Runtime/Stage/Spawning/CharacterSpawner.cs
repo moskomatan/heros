@@ -88,7 +88,13 @@ public sealed class CharacterSpawner
                 _relationshipService,
                 DefaultBotReevaluateInterval);
 
-            _botTargetRunner.Register(botTargetController);
+            BotTargetBinding binding = instance.GetComponent<BotTargetBinding>();
+            if (binding == null)
+            {
+                binding = instance.AddComponent<BotTargetBinding>();
+            }
+
+            binding.Initialize(_botTargetRunner, botTargetController);
         }
 
         return registeredCombatant;

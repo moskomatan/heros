@@ -7,6 +7,7 @@ public sealed class RegisteredCombatant : MonoBehaviour, ICombatant
     [SerializeField] private TeamMember _teamMember = new TeamMember();
 
     private ICombatantRegistry _registry;
+    private ICombatVitality _vitality;
     private bool _isInitialized;
 
     public CombatCharacter Character => _character;
@@ -17,7 +18,8 @@ public sealed class RegisteredCombatant : MonoBehaviour, ICombatant
         isActiveAndEnabled &&
         gameObject.activeInHierarchy &&
         _character != null &&
-        _teamMember != null;
+        _teamMember != null &&
+        (_vitality == null || _vitality.IsAlive);
 
     private void Awake()
     {
@@ -52,6 +54,11 @@ public sealed class RegisteredCombatant : MonoBehaviour, ICombatant
     {
         ResolveReferences();
         ValidateReferences();
+    }
+
+    public void BindVitality(ICombatVitality vitality)
+    {
+        _vitality = vitality;
     }
 
     public void Initialize(ICombatantRegistry registry, TeamId team)

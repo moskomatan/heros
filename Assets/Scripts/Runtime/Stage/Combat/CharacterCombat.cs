@@ -8,6 +8,7 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
 
     private HealthPool _healthPool;
     private DamageReceiver _damageReceiver;
+    private ConfigurableMovementGate _movementGate;
 
     public event Action<int, int> HealthChanged;
 
@@ -23,7 +24,13 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     {
         ResolveRegisteredCombatant();
         ConstructRuntimeObjects();
+        BindVitalityToCombatant();
         SubscribeRuntimeEvents();
+    }
+
+    private void Start()
+    {
+        ResolveMovementGate();
     }
 
     private void FixedUpdate()
@@ -64,11 +71,33 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
         _damageReceiver = new DamageReceiver(_healthPool, mitigation);
     }
 
+    private void BindVitalityToCombatant()
+    {
+        if (_registeredCombatant != null)
+        {
+            _registeredCombatant.BindVitality(this);
+        }
+    }
+
     private void ResolveRegisteredCombatant()
     {
         if (_registeredCombatant == null)
         {
             _registeredCombatant = GetComponent<RegisteredCombatant>();
+        }
+    }
+
+    private void ResolveMovementGate()
+    {
+        if (_movementGate != null)
+        {
+            return;
+        }
+
+        CombatCharacter combatCharacter = GetComponent<CombatCharacter>();
+        if (combatCharacter != null)
+        {
+            _movementGate = combatCharacter.MovementGate;
         }
     }
 
@@ -100,6 +129,12 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
 
     private void OnDied()
     {
+        ResolveMovementGate();
+        if (_movementGate != null)
+        {
+            _movementGate.CanMove = false;
+        }
+
         Died?.Invoke();
     }
 

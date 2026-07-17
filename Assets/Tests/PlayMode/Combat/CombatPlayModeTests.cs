@@ -64,6 +64,75 @@ public sealed class CombatPlayModeTests
     }
 
     [UnityTest]
+    public IEnumerator FacingLeft_DamagesOverlappingEnemyOnLeft()
+    {
+        CharacterCombat attacker = _fixture.CreateCombatant("LeftFacingAttacker", TeamId.TeamOne, Vector2.zero);
+        CharacterCombat defender = _fixture.CreateCombatant(
+            "LeftSideDefender",
+            TeamId.TeamTwo,
+            new Vector2(-0.75f, 0f));
+        CombatPlayModeTestFixture.PlaceOverlappingLeft(attacker, defender);
+        CombatPlayModeTestFixture.FaceDirection(attacker, Vector2.left);
+
+        int damageAppliedCount = 0;
+        defender.DamageApplied += _ => damageAppliedCount++;
+
+        Assert.That(attacker.TryBasicAttack(), Is.True);
+        Assert.That(attacker.BasicAttackHitbox.transform.localPosition.x, Is.LessThan(0f));
+
+        yield return new WaitForFixedUpdate();
+
+        Assert.That(damageAppliedCount, Is.EqualTo(1));
+        Assert.That(defender.CurrentHealth, Is.EqualTo(defender.MaxHealth - 10));
+    }
+
+    [UnityTest]
+    public IEnumerator FacingRight_DamagesOverlappingEnemyOnRight()
+    {
+        CharacterCombat attacker = _fixture.CreateCombatant("RightFacingAttacker", TeamId.TeamOne, Vector2.zero);
+        CharacterCombat defender = _fixture.CreateCombatant(
+            "RightSideDefender",
+            TeamId.TeamTwo,
+            new Vector2(0.75f, 0f));
+        CombatPlayModeTestFixture.PlaceOverlapping(attacker, defender);
+        CombatPlayModeTestFixture.FaceDirection(attacker, Vector2.right);
+
+        int damageAppliedCount = 0;
+        defender.DamageApplied += _ => damageAppliedCount++;
+
+        Assert.That(attacker.TryBasicAttack(), Is.True);
+        Assert.That(attacker.BasicAttackHitbox.transform.localPosition.x, Is.GreaterThan(0f));
+
+        yield return new WaitForFixedUpdate();
+
+        Assert.That(damageAppliedCount, Is.EqualTo(1));
+        Assert.That(defender.CurrentHealth, Is.EqualTo(defender.MaxHealth - 10));
+    }
+
+    [UnityTest]
+    public IEnumerator FacingLeft_DoesNotDamageEnemyOnRight()
+    {
+        CharacterCombat attacker = _fixture.CreateCombatant("MissRightAttacker", TeamId.TeamOne, Vector2.zero);
+        CharacterCombat defender = _fixture.CreateCombatant(
+            "RightSideMissDefender",
+            TeamId.TeamTwo,
+            new Vector2(0.75f, 0f));
+        CombatPlayModeTestFixture.PlaceOverlapping(attacker, defender);
+        CombatPlayModeTestFixture.FaceDirection(attacker, Vector2.left);
+
+        int damageAppliedCount = 0;
+        defender.DamageApplied += _ => damageAppliedCount++;
+
+        Assert.That(attacker.TryBasicAttack(), Is.True);
+        Assert.That(attacker.BasicAttackHitbox.transform.localPosition.x, Is.LessThan(0f));
+
+        yield return new WaitForFixedUpdate();
+
+        Assert.That(damageAppliedCount, Is.Zero);
+        Assert.That(defender.CurrentHealth, Is.EqualTo(defender.MaxHealth));
+    }
+
+    [UnityTest]
     public IEnumerator AlliedHurtbox_IsIgnored()
     {
         CharacterCombat attacker = _fixture.CreateCombatant("AllyAttacker", TeamId.TeamOne, Vector2.zero);
@@ -187,6 +256,9 @@ public sealed class CombatPlayModeTests
         attackerB.transform.position = new Vector3(0.75f, 0f, 0f);
         defender.transform.position = Vector3.zero;
         Physics2D.SyncTransforms();
+
+        CombatPlayModeTestFixture.FaceDirection(attackerA, Vector2.right);
+        CombatPlayModeTestFixture.FaceDirection(attackerB, Vector2.left);
 
         List<DamageResult> appliedResults = new();
         defender.DamageApplied += result => appliedResults.Add(result);

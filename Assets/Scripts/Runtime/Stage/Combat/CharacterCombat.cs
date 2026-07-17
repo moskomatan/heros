@@ -12,6 +12,7 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     private HealthPool _healthPool;
     private DamageReceiver _damageReceiver;
     private ConfigurableMovementGate _movementGate;
+    private IMovementState _movementState;
     private AttackExecutionTracker _executionTracker;
     private IRandomSource _randomSource;
     private ITeamRelationshipService _relationshipService;
@@ -21,6 +22,8 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     private readonly Dictionary<Collider2D, ICombatant> _hitCombatantCache = new();
     private readonly List<Collider2D> _overlapBuffer = new(8);
     private ContactFilter2D _overlapFilter;
+    private float _basicAttackHitboxLocalAbsX;
+    private bool _hasCachedHitboxLocalAbsX;
 
     public event Action<int, int> HealthChanged;
 
@@ -58,12 +61,13 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
         BindVitalityToCombatant();
         SubscribeRuntimeEvents();
         ConfigureOverlapFilter();
+        CacheAttackHitboxLocalAbsX();
         EnsureAttackHitboxStartsDisabled();
     }
 
     private void Start()
     {
-        ResolveMovementGate();
+        ResolveMovementDependencies();
     }
 
     private void Update()
@@ -141,9 +145,12 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
         if (!enabled)
         {
             ClearHitReceiverCache();
+            _basicAttackHitbox.enabled = false;
+            return;
         }
 
-        _basicAttackHitbox.enabled = enabled;
+        OrientAttackHitboxToFacing();
+        _basicAttackHitbox.enabled = true;
     }
 
     public void ScanInitialHitboxOverlaps()
@@ -235,6 +242,44 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
         }
     }
 
+    private void CacheAttackHitboxLocalAbsX()
+    {
+        if (_basicAttackHitbox == null || _hasCachedHitboxLocalAbsX)
+        {
+            return;
+        }
+
+        _basicAttackHitboxLocalAbsX = Mathf.Abs(_basicAttackHitbox.transform.localPosition.x);
+        _hasCachedHitboxLocalAbsX = true;
+    }
+
+    private void OrientAttackHitboxToFacing()
+    {
+        if (_basicAttackHitbox == null)
+        {
+            return;
+        }
+
+        CacheAttackHitboxLocalAbsX();
+        ResolveMovementDependencies();
+
+        float facingSign = 1f;
+        if (_movementState != null)
+        {
+            float facingX = _movementState.LastNonZeroDirection.x;
+            if (Mathf.Abs(facingX) > 0.0001f)
+            {
+                facingSign = Mathf.Sign(facingX);
+            }
+        }
+
+        Vector3 localPosition = _basicAttackHitbox.transform.localPosition;
+        _basicAttackHitbox.transform.localPosition = new Vector3(
+            _basicAttackHitboxLocalAbsX * facingSign,
+            localPosition.y,
+            localPosition.z);
+    }
+
     private void ConfigureOverlapFilter()
     {
         _overlapFilter = ContactFilter2D.noFilter;
@@ -287,7 +332,7 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
 
     private void SetAttackMovementLock(bool isLocked)
     {
-        ResolveMovementGate();
+        ResolveMovementDependencies();
         if (_movementGate == null)
         {
             return;
@@ -340,17 +385,27 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
         _attackInputSource = attackInputSource;
     }
 
-    private void ResolveMovementGate()
+    private void ResolveMovementDependencies()
     {
-        if (_movementGate != null)
+        if (_movementGate != null && _movementState != null)
         {
             return;
         }
 
         CombatCharacter combatCharacter = GetComponent<CombatCharacter>();
-        if (combatCharacter != null)
+        if (combatCharacter == null)
+        {
+            return;
+        }
+
+        if (_movementGate == null)
         {
             _movementGate = combatCharacter.MovementGate;
+        }
+
+        if (_movementState == null)
+        {
+            _movementState = combatCharacter.MovementState;
         }
     }
 
@@ -391,7 +446,7 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     {
         _basicAttackRuntime?.Cancel();
 
-        ResolveMovementGate();
+        ResolveMovementDependencies();
         if (_movementGate != null)
         {
             _movementGate.CanMove = false;

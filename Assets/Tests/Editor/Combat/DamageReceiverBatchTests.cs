@@ -73,10 +73,39 @@ public sealed class DamageReceiverBatchTests
         Assert.That(results[1].WasApplied, Is.True);
         Assert.That(results[0].FinalDamage, Is.EqualTo(6));
         Assert.That(results[1].FinalDamage, Is.EqualTo(6));
+        Assert.That(results[0].WasLethal, Is.False);
         Assert.That(results[1].WasLethal, Is.True);
         Assert.That(healthPool.CurrentHealth, Is.Zero);
         Assert.That(receiver.IsAlive, Is.False);
         Assert.That(healthChangedCount, Is.EqualTo(1));
+        Assert.That(diedCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void ResolvePendingBatch_OverkillFirst_MarksOnlyFirstHitLethal()
+    {
+        HealthPool healthPool = new HealthPool(10);
+        DefenseResolver mitigation = new DefenseResolver(defense: 0, criticalDefense: 0);
+        DamageReceiver receiver = new DamageReceiver(healthPool, mitigation);
+        FakeCombatant attackerA = new FakeCombatant();
+        FakeCombatant attackerB = new FakeCombatant();
+        int diedCount = 0;
+        healthPool.Died += () => diedCount++;
+
+        // Sorted by AttackExecutionId: 12 then 6. First hit alone kills; second must not be lethal.
+        receiver.ReceiveDamage(new DamageRequest(attackerA, 1u, 12, false, Vector3.zero));
+        receiver.ReceiveDamage(new DamageRequest(attackerB, 2u, 6, false, Vector3.zero));
+
+        IReadOnlyList<DamageResult> results = receiver.ResolvePendingBatch();
+
+        Assert.That(results.Count, Is.EqualTo(2));
+        Assert.That(results[0].FinalDamage, Is.EqualTo(12));
+        Assert.That(results[1].FinalDamage, Is.EqualTo(6));
+        Assert.That(results[0].WasLethal, Is.True);
+        Assert.That(results[1].WasLethal, Is.False);
+        Assert.That(results[0].RemainingHealth, Is.Zero);
+        Assert.That(results[1].RemainingHealth, Is.Zero);
+        Assert.That(healthPool.CurrentHealth, Is.Zero);
         Assert.That(diedCount, Is.EqualTo(1));
     }
 

@@ -74,9 +74,12 @@ public sealed class DamageReceiver : IDamageReceiver
 
         foreach (MitigatedHit hit in mitigatedHits)
         {
+            int damageBeforeHit = runningDamage;
             runningDamage += hit.Mitigation.FinalDamage;
             int remainingHealth = Math.Max(0, healthBefore - runningDamage);
-            bool wasLethal = healthBefore > 0 && remainingHealth == 0;
+            bool wasLethal = healthBefore > 0
+                && damageBeforeHit < healthBefore
+                && remainingHealth == 0;
 
             results.Add(new DamageResult(
                 wasApplied: true,
@@ -171,7 +174,6 @@ public sealed class DamageReceiver : IDamageReceiver
             Request = request;
         }
 
-        // Field (not property) so callers can pass Request with `in`.
         public readonly DamageRequest Request;
     }
 

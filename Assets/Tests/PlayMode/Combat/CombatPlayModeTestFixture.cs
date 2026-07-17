@@ -112,10 +112,34 @@ internal sealed class CombatPlayModeTestFixture
         return combat;
     }
 
+    public static void FaceDirection(CharacterCombat combatant, Vector2 direction)
+    {
+        AlwaysZeroMovementInput movementInput = combatant.GetComponent<AlwaysZeroMovementInput>();
+        Assert.That(movementInput, Is.Not.Null);
+
+        CombatCharacter character = combatant.GetComponent<CombatCharacter>();
+        Assert.That(character, Is.Not.Null);
+        Assert.That(character.MovementState, Is.InstanceOf<CharacterMovementController>());
+
+        Vector3 positionBefore = combatant.transform.position;
+        movementInput.Direction = direction;
+        ((CharacterMovementController)character.MovementState).Tick(0.016f);
+        movementInput.Direction = Vector2.zero;
+        combatant.transform.position = positionBefore;
+        Physics2D.SyncTransforms();
+    }
+
     public static void PlaceOverlapping(CharacterCombat attacker, CharacterCombat defender)
     {
         attacker.transform.position = Vector3.zero;
         defender.transform.position = new Vector3(0.75f, 0f, 0f);
+        Physics2D.SyncTransforms();
+    }
+
+    public static void PlaceOverlappingLeft(CharacterCombat attacker, CharacterCombat defender)
+    {
+        attacker.transform.position = Vector3.zero;
+        defender.transform.position = new Vector3(-0.75f, 0f, 0f);
         Physics2D.SyncTransforms();
     }
 
@@ -137,9 +161,11 @@ internal sealed class CombatPlayModeTestFixture
 
     private sealed class AlwaysZeroMovementInput : MonoBehaviour, IMovementInputSource
     {
+        public Vector2 Direction { get; set; }
+
         public Vector2 GetDirection()
         {
-            return Vector2.zero;
+            return Direction;
         }
     }
 

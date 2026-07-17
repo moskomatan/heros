@@ -11,7 +11,12 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     private HealthPool _healthPool;
     private DamageReceiver _damageReceiver;
     private ConfigurableMovementGate _movementGate;
+    private AttackExecutionTracker _executionTracker;
+    private IRandomSource _randomSource;
+    private ITeamRelationshipService _relationshipService;
+    private BasicAttackRuntime _basicAttackRuntime;
     private readonly Dictionary<Collider2D, IDamageReceiver> _hitReceiverCache = new();
+    private readonly Dictionary<Collider2D, ICombatant> _hitCombatantCache = new();
     private readonly List<Collider2D> _overlapBuffer = new(8);
     private ContactFilter2D _overlapFilter;
 
@@ -23,9 +28,8 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
 
     /// <summary>
     /// Raised when the basic attack hitbox contacts a resolvable damage receiver.
-    /// BasicAttackRuntime (Task 7) subscribes for team/damage handling.
     /// </summary>
-    public event Action<IDamageReceiver, Vector3> HitCandidateDetected;
+    public event Action<IDamageReceiver, ICombatant, Vector3> HitCandidateDetected;
 
     public RegisteredCombatant RegisteredCombatant => _registeredCombatant;
 
@@ -46,6 +50,14 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     private void Start()
     {
         ResolveMovementGate();
+    }
+
+    private void Update()
+    {
+        if (_basicAttackRuntime != null)
+        {
+            _basicAttackRuntime.Tick(Time.deltaTime);
+        }
     }
 
     private void FixedUpdate()
@@ -70,15 +82,27 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
         ProcessHitboxCollider(other);
     }
 
+    public void Initialize(ITeamRelationshipService relationshipService)
+    {
+        if (relationshipService == null)
+        {
+            Debug.LogError($"{nameof(CharacterCombat)} on {name} received a null relationship service.", this);
+            return;
+        }
+
+        _relationshipService = relationshipService;
+        ResolveRegisteredCombatant();
+        ConstructAttackRuntime();
+    }
+
     public DamageResult ReceiveDamage(in DamageRequest request)
     {
         return _damageReceiver.ReceiveDamage(in request);
     }
 
-    // Wired in Task 7 when BasicAttackRuntime is composed.
     public bool TryBasicAttack()
     {
-        return false;
+        return _basicAttackRuntime != null && _basicAttackRuntime.TryBeginAttack();
     }
 
     public void SetAttackHitboxEnabled(bool enabled)
@@ -129,12 +153,14 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
             return;
         }
 
-        HitCandidateDetected?.Invoke(receiver, other.bounds.center);
+        ICombatant combatant = ResolveHitCombatant(other);
+        HitCandidateDetected?.Invoke(receiver, combatant, other.bounds.center);
     }
 
     public void ClearHitReceiverCache()
     {
         _hitReceiverCache.Clear();
+        _hitCombatantCache.Clear();
     }
 
     private IDamageReceiver ResolveHitReceiver(Collider2D other)
@@ -151,6 +177,22 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
         }
 
         return receiver;
+    }
+
+    private ICombatant ResolveHitCombatant(Collider2D other)
+    {
+        if (_hitCombatantCache.TryGetValue(other, out ICombatant cached))
+        {
+            return cached;
+        }
+
+        ICombatant combatant = other.GetComponentInParent<ICombatant>();
+        if (combatant != null)
+        {
+            _hitCombatantCache[other] = combatant;
+        }
+
+        return combatant;
     }
 
     private bool IsOwnedCollider(Collider2D other)
@@ -189,6 +231,50 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
             _configuration.Defense.Defense,
             _configuration.Defense.CriticalDefense);
         _damageReceiver = new DamageReceiver(_healthPool, mitigation);
+        _executionTracker = new AttackExecutionTracker();
+        _randomSource = new UnityRandomSource();
+    }
+
+    private void ConstructAttackRuntime()
+    {
+        if (_basicAttackRuntime != null || _relationshipService == null || _registeredCombatant == null)
+        {
+            return;
+        }
+
+        AttackHitValidator validator = new AttackHitValidator(_relationshipService, _executionTracker);
+        IAttackHitbox hitbox = new CharacterAttackHitbox(this);
+        _basicAttackRuntime = new BasicAttackRuntime(
+            _configuration.BasicAttack,
+            _registeredCombatant,
+            () => IsAlive,
+            hitbox,
+            _randomSource,
+            _executionTracker,
+            validator,
+            SetAttackMovementLock);
+
+        HitCandidateDetected += _basicAttackRuntime.HandleHitCandidate;
+    }
+
+    private void SetAttackMovementLock(bool isLocked)
+    {
+        ResolveMovementGate();
+        if (_movementGate == null)
+        {
+            return;
+        }
+
+        if (isLocked)
+        {
+            _movementGate.CanMove = false;
+            return;
+        }
+
+        if (IsAlive)
+        {
+            _movementGate.CanMove = true;
+        }
     }
 
     private void BindVitalityToCombatant()
@@ -240,6 +326,11 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
         {
             _damageReceiver.DamageApplied -= OnDamageApplied;
         }
+
+        if (_basicAttackRuntime != null)
+        {
+            HitCandidateDetected -= _basicAttackRuntime.HandleHitCandidate;
+        }
     }
 
     private void OnHealthChanged(int current, int max)
@@ -249,6 +340,8 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
 
     private void OnDied()
     {
+        _basicAttackRuntime?.Cancel();
+
         ResolveMovementGate();
         if (_movementGate != null)
         {
@@ -261,5 +354,25 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     private void OnDamageApplied(DamageResult result)
     {
         DamageApplied?.Invoke(result);
+    }
+
+    private sealed class CharacterAttackHitbox : IAttackHitbox
+    {
+        private readonly CharacterCombat _owner;
+
+        public CharacterAttackHitbox(CharacterCombat owner)
+        {
+            _owner = owner;
+        }
+
+        public void SetEnabled(bool enabled)
+        {
+            _owner.SetAttackHitboxEnabled(enabled);
+        }
+
+        public void ScanInitialOverlaps()
+        {
+            _owner.ScanInitialHitboxOverlaps();
+        }
     }
 }

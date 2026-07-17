@@ -77,6 +77,12 @@ public sealed class CharacterSpawner
 
         registeredCombatant.Initialize(_registry, entry.Team);
 
+        CharacterCombat characterCombat = instance.GetComponent<CharacterCombat>();
+        if (characterCombat != null)
+        {
+            characterCombat.Initialize(_relationshipService);
+        }
+
         BotMovementInputSource botMovementInputSource = instance.GetComponent<BotMovementInputSource>();
         if (botMovementInputSource != null)
         {

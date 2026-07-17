@@ -54,7 +54,7 @@ public sealed class HitboxRoutingTests
 
         int eventCount = 0;
         IDamageReceiver reportedReceiver = null;
-        attacker.HitCandidateDetected += (receiver, _) =>
+        attacker.HitCandidateDetected += (receiver, _, _) =>
         {
             eventCount++;
             reportedReceiver = receiver;
@@ -145,7 +145,7 @@ public sealed class HitboxRoutingTests
     {
         CharacterCombat attacker = CreateCombatWithHitbox("SelfHitAttacker");
         int eventCount = 0;
-        attacker.HitCandidateDetected += (_, _) => eventCount++;
+        attacker.HitCandidateDetected += (_, _, _) => eventCount++;
 
         attacker.SetAttackHitboxEnabled(true);
         attacker.ProcessHitboxCollider(attacker.BasicAttackHitbox);

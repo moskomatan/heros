@@ -89,7 +89,7 @@ public sealed class CharacterCombatCompositionTests
     }
 
     [Test]
-    public void TryBasicAttack_IsStubbedFalseUntilTask7()
+    public void TryBasicAttack_WithoutInitialize_ReturnsFalse()
     {
         CharacterCombat combat = CreateCombat(
             maxHealth: 30,
@@ -98,6 +98,19 @@ public sealed class CharacterCombatCompositionTests
 
         Assert.That(combat.TryBasicAttack(), Is.False);
         Assert.That(((IBasicAttackRequester)combat).TryBasicAttack(), Is.False);
+    }
+
+    [Test]
+    public void TryBasicAttack_AfterInitialize_WhenReady_ReturnsTrue()
+    {
+        CharacterCombat combat = CreateCombatWithCombatant(
+            maxHealth: 30,
+            defense: 0,
+            criticalDefense: 0);
+        combat.Initialize(new DifferentTeamRelationshipService());
+
+        Assert.That(combat.TryBasicAttack(), Is.True);
+        Assert.That(combat.TryBasicAttack(), Is.False);
     }
 
     [Test]
@@ -181,6 +194,38 @@ public sealed class CharacterCombatCompositionTests
         configuration.FindPropertyRelative("_basicAttack").FindPropertyRelative("_cooldown").floatValue = 0.5f;
         configuration.FindPropertyRelative("_basicAttack").FindPropertyRelative("_activeTime").floatValue = 0.2f;
         serializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+        gameObject.SetActive(true);
+        return combat;
+    }
+
+    private CharacterCombat CreateCombatWithCombatant(int maxHealth, int defense, int criticalDefense)
+    {
+        GameObject gameObject = new GameObject("CharacterCombatWithCombatant");
+        gameObject.SetActive(false);
+        _createdObjects.Add(gameObject);
+
+        KeyboardMovementInputSource input = gameObject.AddComponent<KeyboardMovementInputSource>();
+        CombatCharacter character = gameObject.AddComponent<CombatCharacter>();
+        RegisteredCombatant registeredCombatant = gameObject.AddComponent<RegisteredCombatant>();
+        CharacterCombat combat = gameObject.AddComponent<CharacterCombat>();
+
+        SerializedObject characterSerializedObject = new SerializedObject(character);
+        characterSerializedObject.FindProperty("_inputSourceBehaviour").objectReferenceValue = input;
+        characterSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+        SerializedObject serializedCombat = new SerializedObject(combat);
+        SerializedProperty configuration = serializedCombat.FindProperty("_configuration");
+        configuration.FindPropertyRelative("_vitality").FindPropertyRelative("_maxHealth").intValue = maxHealth;
+        configuration.FindPropertyRelative("_defense").FindPropertyRelative("_defense").intValue = defense;
+        configuration.FindPropertyRelative("_defense").FindPropertyRelative("_criticalDefense").intValue = criticalDefense;
+        configuration.FindPropertyRelative("_basicAttack").FindPropertyRelative("_damage").intValue = 10;
+        configuration.FindPropertyRelative("_basicAttack").FindPropertyRelative("_criticalChance").floatValue = 0.1f;
+        configuration.FindPropertyRelative("_basicAttack").FindPropertyRelative("_criticalDamageMultiplier").floatValue = 1.5f;
+        configuration.FindPropertyRelative("_basicAttack").FindPropertyRelative("_cooldown").floatValue = 0.5f;
+        configuration.FindPropertyRelative("_basicAttack").FindPropertyRelative("_activeTime").floatValue = 0.2f;
+        serializedCombat.FindProperty("_registeredCombatant").objectReferenceValue = registeredCombatant;
+        serializedCombat.ApplyModifiedPropertiesWithoutUndo();
 
         gameObject.SetActive(true);
         return combat;

@@ -168,6 +168,7 @@ GameObject:
   - component: {fileID: 8533507200946264458}
   - component: {fileID: 3480996624350472120}
   - component: {fileID: 329166096581560387}
+  - component: {fileID: 8401122334455667788}
   - component: {fileID: 7317794139165441617}
   - component: {fileID: 5109283746102938471}
   - component: {fileID: 5209182736451827364}
@@ -287,6 +288,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c28dcfb19ffa241d4924bfb0636e6f04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeyboardMovementInputSource
+--- !u!114 &8401122334455667788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6191203375009281037}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a4b2d0e3c5f4a7b9d1e2f3a4b5c6d7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeyboardAttackInputSource
 --- !u!114 &7317794139165441617
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -356,3 +369,4 @@ MonoBehaviour:
       _activeTime: 0.2
   _registeredCombatant: {fileID: 7317794139165441617}
   _basicAttackHitbox: {fileID: 5803122130991221308}
+  _attackInputSourceBehaviour: {fileID: 8401122334455667788}

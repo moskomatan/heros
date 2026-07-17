@@ -7,6 +7,7 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     [SerializeField] private CombatConfiguration _configuration = new CombatConfiguration();
     [SerializeField] private RegisteredCombatant _registeredCombatant;
     [SerializeField] private Collider2D _basicAttackHitbox;
+    [SerializeField] private MonoBehaviour _attackInputSourceBehaviour;
 
     private HealthPool _healthPool;
     private DamageReceiver _damageReceiver;
@@ -15,6 +16,7 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     private IRandomSource _randomSource;
     private ITeamRelationshipService _relationshipService;
     private BasicAttackRuntime _basicAttackRuntime;
+    private IAttackInputSource _attackInputSource;
     private readonly Dictionary<Collider2D, IDamageReceiver> _hitReceiverCache = new();
     private readonly Dictionary<Collider2D, ICombatant> _hitCombatantCache = new();
     private readonly List<Collider2D> _overlapBuffer = new(8);
@@ -40,6 +42,7 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     private void Awake()
     {
         ResolveRegisteredCombatant();
+        ResolveAttackInputSource();
         ConstructRuntimeObjects();
         BindVitalityToCombatant();
         SubscribeRuntimeEvents();
@@ -58,6 +61,11 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
         {
             _basicAttackRuntime.Tick(Time.deltaTime);
         }
+
+        if (_attackInputSource != null && _attackInputSource.ConsumeBasicAttackPressed())
+        {
+            TryBasicAttack();
+        }
     }
 
     private void FixedUpdate()
@@ -75,6 +83,13 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     {
         _configuration?.Clamp();
         ResolveRegisteredCombatant();
+
+        if (_attackInputSourceBehaviour != null && _attackInputSourceBehaviour is not IAttackInputSource)
+        {
+            Debug.LogWarning(
+                $"{nameof(CharacterCombat)} on {name} expects {nameof(_attackInputSourceBehaviour)} to implement {nameof(IAttackInputSource)}.",
+                this);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -291,6 +306,25 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
         {
             _registeredCombatant = GetComponent<RegisteredCombatant>();
         }
+    }
+
+    private void ResolveAttackInputSource()
+    {
+        _attackInputSource = null;
+        if (_attackInputSourceBehaviour == null)
+        {
+            return;
+        }
+
+        if (_attackInputSourceBehaviour is not IAttackInputSource attackInputSource)
+        {
+            Debug.LogError(
+                $"{nameof(CharacterCombat)} on {name} requires {nameof(_attackInputSourceBehaviour)} to implement {nameof(IAttackInputSource)}.",
+                this);
+            return;
+        }
+
+        _attackInputSource = attackInputSource;
     }
 
     private void ResolveMovementGate()

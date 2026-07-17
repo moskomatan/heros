@@ -168,6 +168,7 @@ GameObject:
   - component: {fileID: 7177078678723668613}
   - component: {fileID: 4910792613562523357}
   - component: {fileID: 2517659174699605495}
+  - component: {fileID: 8502233445566778899}
   - component: {fileID: -6183011883323273073}
   - component: {fileID: 6109283746102938471}
   - component: {fileID: 6209182736451827364}
@@ -288,6 +289,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BotMovementInputSource
   _target: {fileID: 0}
+--- !u!114 &8502233445566778899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5387378529326652594}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac6d4f2a5e7b4c9d1f3a4b5c6d7e8f90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BotAttackInputSource
+  _attackRange: 1.5
+  _chaseTargetSource: {fileID: 2517659174699605495}
 --- !u!114 &-6183011883323273073
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -357,3 +372,4 @@ MonoBehaviour:
       _activeTime: 0.2
   _registeredCombatant: {fileID: -6183011883323273073}
   _basicAttackHitbox: {fileID: 6803122130991221308}
+  _attackInputSourceBehaviour: {fileID: 8502233445566778899}

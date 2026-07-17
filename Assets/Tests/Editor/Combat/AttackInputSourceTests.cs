@@ -173,7 +173,7 @@ public sealed class AttackInputSourceTests
         CombatCharacter character = root.AddComponent<CombatCharacter>();
         RegisteredCombatant combatant = root.AddComponent<RegisteredCombatant>();
         CharacterCombat combat = root.AddComponent<CharacterCombat>();
-        FakeAttackInputSource inputSource = root.AddComponent<AttackInputSourceTestsFakeAttackInput>();
+        AttackInputSourceTestsFakeAttackInput inputSource = root.AddComponent<AttackInputSourceTestsFakeAttackInput>();
 
         SerializedObject serializedCharacter = new SerializedObject(character);
         serializedCharacter.FindProperty("_inputSourceBehaviour").objectReferenceValue = movementInput;

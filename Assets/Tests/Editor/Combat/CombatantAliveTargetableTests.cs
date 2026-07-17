@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -86,7 +87,7 @@ public sealed class CombatantAliveTargetableTests
                     .SelectMany(method => method.GetParameters().Select(parameter => parameter.ParameterType)
                         .Append(method.ReturnType)));
 
-        Assert.That(referencedTypes, Does.Not.Contain(characterCombatType));
+        Assert.That(referencedTypes, Has.No.Member(characterCombatType));
 
         MethodInfo bindVitality = registeredCombatantType.GetMethod(
             "BindVitality",

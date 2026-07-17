@@ -61,8 +61,9 @@ public sealed class DamageReceiver : IDamageReceiver
 
         foreach (PendingDamage pending in _currentBatch)
         {
-            MitigationResult mitigation = _mitigation.Mitigate(in pending.Request);
-            mitigatedHits.Add(new MitigatedHit(pending.Request, mitigation));
+            DamageRequest request = pending.Request;
+            MitigationResult mitigation = _mitigation.Mitigate(in request);
+            mitigatedHits.Add(new MitigatedHit(in request, mitigation));
             totalFinalDamage += mitigation.FinalDamage;
         }
 
@@ -170,7 +171,8 @@ public sealed class DamageReceiver : IDamageReceiver
             Request = request;
         }
 
-        public DamageRequest Request { get; }
+        // Field (not property) so callers can pass Request with `in`.
+        public readonly DamageRequest Request;
     }
 
     private readonly struct MitigatedHit
@@ -181,8 +183,8 @@ public sealed class DamageReceiver : IDamageReceiver
             Mitigation = mitigation;
         }
 
-        public DamageRequest Request { get; }
+        public readonly DamageRequest Request;
 
-        public MitigationResult Mitigation { get; }
+        public readonly MitigationResult Mitigation;
     }
 }

@@ -172,6 +172,7 @@ GameObject:
   - component: {fileID: -6183011883323273073}
   - component: {fileID: 6109283746102938471}
   - component: {fileID: 6209182736451827364}
+  - component: {fileID: 6309282736451827365}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -373,3 +374,20 @@ MonoBehaviour:
   _registeredCombatant: {fileID: -6183011883323273073}
   _basicAttackHitbox: {fileID: 6803122130991221308}
   _attackInputSourceBehaviour: {fileID: 8502233445566778899}
+--- !u!114 &6309282736451827365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5387378529326652594}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c4e9a1b2d3f4e5a8b9c0d1e2f3a4b5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatDebugFeedback
+  _combat: {fileID: 6209182736451827364}
+  _spriteRenderer: {fileID: 7177078678723668613}
+  _attackFlashColor: {r: 1, g: 0.92, b: 0.2, a: 1}
+  _damageFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  _flashDuration: 0.08

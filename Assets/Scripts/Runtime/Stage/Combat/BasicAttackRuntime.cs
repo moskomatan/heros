@@ -59,6 +59,10 @@ public sealed class BasicAttackRuntime
     private uint _nextExecutionId = 1u;
     private uint _currentExecutionId;
 
+    public event Action AttackStarted;
+
+    public event Action AttackEnded;
+
     public BasicAttackPhase Phase => _phase;
 
     public uint CurrentExecutionId => _currentExecutionId;
@@ -85,6 +89,7 @@ public sealed class BasicAttackRuntime
         _hitbox.SetEnabled(true);
         _hitbox.ScanInitialOverlaps();
         _setAttackMovementLock(true);
+        AttackStarted?.Invoke();
 
         if (_activeTime <= 0f)
         {
@@ -161,6 +166,10 @@ public sealed class BasicAttackRuntime
         {
             _hitbox.SetEnabled(false);
             _setAttackMovementLock(false);
+            _phase = BasicAttackPhase.Ready;
+            _phaseElapsed = 0f;
+            AttackEnded?.Invoke();
+            return;
         }
 
         _phase = BasicAttackPhase.Ready;
@@ -173,6 +182,7 @@ public sealed class BasicAttackRuntime
         _setAttackMovementLock(false);
         _phase = BasicAttackPhase.Cooldown;
         _phaseElapsed = 0f;
+        AttackEnded?.Invoke();
 
         if (_cooldown <= 0f)
         {

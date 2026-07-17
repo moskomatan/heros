@@ -28,6 +28,10 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
 
     public event Action<DamageResult> DamageApplied;
 
+    public event Action AttackStarted;
+
+    public event Action AttackEnded;
+
     /// <summary>
     /// Raised when the basic attack hitbox contacts a resolvable damage receiver.
     /// </summary>
@@ -38,6 +42,13 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     public Collider2D BasicAttackHitbox => _basicAttackHitbox;
 
     public bool IsAlive => _healthPool != null && _healthPool.IsAlive;
+
+    public int CurrentHealth => _healthPool != null ? _healthPool.CurrentHealth : 0;
+
+    public int MaxHealth => _healthPool != null ? _healthPool.MaxHealth : 0;
+
+    public BasicAttackPhase AttackPhase =>
+        _basicAttackRuntime != null ? _basicAttackRuntime.Phase : BasicAttackPhase.Ready;
 
     private void Awake()
     {
@@ -270,6 +281,8 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
             SetAttackMovementLock);
 
         HitCandidateDetected += _basicAttackRuntime.HandleHitCandidate;
+        _basicAttackRuntime.AttackStarted += OnAttackStarted;
+        _basicAttackRuntime.AttackEnded += OnAttackEnded;
     }
 
     private void SetAttackMovementLock(bool isLocked)
@@ -364,6 +377,8 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
         if (_basicAttackRuntime != null)
         {
             HitCandidateDetected -= _basicAttackRuntime.HandleHitCandidate;
+            _basicAttackRuntime.AttackStarted -= OnAttackStarted;
+            _basicAttackRuntime.AttackEnded -= OnAttackEnded;
         }
     }
 
@@ -388,6 +403,16 @@ public sealed class CharacterCombat : MonoBehaviour, IDamageReceiver, ICombatVit
     private void OnDamageApplied(DamageResult result)
     {
         DamageApplied?.Invoke(result);
+    }
+
+    private void OnAttackStarted()
+    {
+        AttackStarted?.Invoke();
+    }
+
+    private void OnAttackEnded()
+    {
+        AttackEnded?.Invoke();
     }
 
     private sealed class CharacterAttackHitbox : IAttackHitbox

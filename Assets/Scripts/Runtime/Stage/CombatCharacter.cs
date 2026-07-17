@@ -11,6 +11,7 @@ public sealed class CombatCharacter : MonoBehaviour
     [SerializeField] private CharacterMovementSettings _settings = new CharacterMovementSettings();
     [SerializeField] private MonoBehaviour _inputSourceBehaviour;
     [SerializeField] private Transform _movementRoot;
+    [SerializeField] private Transform _facingRoot;
     [SerializeField] private MovementMotorType _motorType = MovementMotorType.Transform;
     [SerializeField] private Rigidbody2D _rigidbody;
 
@@ -47,11 +48,13 @@ public sealed class CombatCharacter : MonoBehaviour
 
         _movementGate = new ConfigurableMovementGate();
 
+        Transform facingRoot = _facingRoot != null ? _facingRoot : transform;
         _controller = new CharacterMovementController(
             inputSource,
             motor,
             _settings,
-            _movementGate);
+            _movementGate,
+            facingRoot);
     }
 
     private ICharacterMovementMotor CreateMotor()

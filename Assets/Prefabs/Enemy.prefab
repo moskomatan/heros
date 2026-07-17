@@ -275,6 +275,7 @@ MonoBehaviour:
     _normalizeDiagonals: 1
   _inputSourceBehaviour: {fileID: 2517659174699605495}
   _movementRoot: {fileID: 0}
+  _facingRoot: {fileID: 0}
   _motorType: 0
   _rigidbody: {fileID: 6109283746102938471}
 --- !u!114 &2517659174699605495

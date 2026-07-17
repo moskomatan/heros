@@ -6,6 +6,7 @@ public sealed class CharacterMovementController : IMovementState
     private readonly ICharacterMovementMotor _motor;
     private readonly CharacterMovementSettings _settings;
     private readonly IMovementGate _gate;
+    private readonly Transform _facingRoot;
 
     private Vector2 _direction;
     private Vector2 _lastNonZeroDirection = Vector2.right;
@@ -15,12 +16,15 @@ public sealed class CharacterMovementController : IMovementState
         IMovementInputSource input,
         ICharacterMovementMotor motor,
         CharacterMovementSettings settings,
-        IMovementGate gate)
+        IMovementGate gate,
+        Transform facingRoot)
     {
         _input = input;
         _motor = motor;
         _settings = settings;
         _gate = gate;
+        _facingRoot = facingRoot;
+        ApplyFacingScale();
     }
 
     public Vector2 Direction => _direction;
@@ -51,12 +55,43 @@ public sealed class CharacterMovementController : IMovementState
         if (_direction.sqrMagnitude > 0.0001f)
         {
             _lastNonZeroDirection = _direction;
+            ApplyFacingScale();
         }
 
         if (IsMoving)
         {
             _motor.Move(_velocity, deltaTime);
         }
+    }
+
+    private void ApplyFacingScale()
+    {
+        if (_facingRoot == null)
+        {
+            return;
+        }
+
+        float facingX = _lastNonZeroDirection.x;
+        if (Mathf.Abs(facingX) <= 0.0001f)
+        {
+            return;
+        }
+
+        float sign = Mathf.Sign(facingX);
+        Vector3 scale = _facingRoot.localScale;
+        float absX = Mathf.Abs(scale.x);
+        if (absX <= 0.0001f)
+        {
+            absX = 1f;
+        }
+
+        float newX = absX * sign;
+        if (Mathf.Approximately(scale.x, newX))
+        {
+            return;
+        }
+
+        _facingRoot.localScale = new Vector3(newX, scale.y, scale.z);
     }
 
     private Vector2 ProcessDirection(Vector2 rawDirection)

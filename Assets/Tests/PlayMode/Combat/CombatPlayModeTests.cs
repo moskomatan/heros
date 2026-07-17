@@ -78,7 +78,8 @@ public sealed class CombatPlayModeTests
         defender.DamageApplied += _ => damageAppliedCount++;
 
         Assert.That(attacker.TryBasicAttack(), Is.True);
-        Assert.That(attacker.BasicAttackHitbox.transform.localPosition.x, Is.LessThan(0f));
+        Assert.That(attacker.transform.localScale.x, Is.LessThan(0f));
+        Assert.That(attacker.BasicAttackHitbox.transform.localPosition.x, Is.GreaterThan(0f));
 
         yield return new WaitForFixedUpdate();
 
@@ -101,6 +102,7 @@ public sealed class CombatPlayModeTests
         defender.DamageApplied += _ => damageAppliedCount++;
 
         Assert.That(attacker.TryBasicAttack(), Is.True);
+        Assert.That(attacker.transform.localScale.x, Is.GreaterThan(0f));
         Assert.That(attacker.BasicAttackHitbox.transform.localPosition.x, Is.GreaterThan(0f));
 
         yield return new WaitForFixedUpdate();
@@ -124,7 +126,7 @@ public sealed class CombatPlayModeTests
         defender.DamageApplied += _ => damageAppliedCount++;
 
         Assert.That(attacker.TryBasicAttack(), Is.True);
-        Assert.That(attacker.BasicAttackHitbox.transform.localPosition.x, Is.LessThan(0f));
+        Assert.That(attacker.transform.localScale.x, Is.LessThan(0f));
 
         yield return new WaitForFixedUpdate();
 
@@ -236,15 +238,13 @@ public sealed class CombatPlayModeTests
             TeamId.TeamOne,
             new Vector2(-0.75f, 0f),
             damage: 10,
-            criticalChance: 0f,
-            hitboxLocalOffset: new Vector2(0.75f, 0f));
+            criticalChance: 0f);
         CharacterCombat attackerB = _fixture.CreateCombatant(
             "AttackerB",
             TeamId.TeamOne,
             new Vector2(0.75f, 0f),
             damage: 10,
-            criticalChance: 0f,
-            hitboxLocalOffset: new Vector2(-0.75f, 0f));
+            criticalChance: 0f);
         CharacterCombat defender = _fixture.CreateCombatant(
             "SharedDefender",
             TeamId.TeamTwo,

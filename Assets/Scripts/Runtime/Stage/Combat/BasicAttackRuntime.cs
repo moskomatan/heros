@@ -148,7 +148,7 @@ public sealed class BasicAttackRuntime
         int rawDamage = _damage;
         if (isCritical)
         {
-            rawDamage = Mathf.RoundToInt(_damage * _criticalDamageMultiplier);
+            rawDamage = (int)Math.Round(_damage * (double)_criticalDamageMultiplier);
         }
 
         DamageRequest request = new DamageRequest(

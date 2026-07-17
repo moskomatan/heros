@@ -3,17 +3,17 @@ using System.Collections.ObjectModel;
 
 public sealed class CombatantRegistry : ICombatantRegistry
 {
-    private readonly List<RegisteredCombatant> _combatants = new List<RegisteredCombatant>();
-    private readonly ReadOnlyCollection<RegisteredCombatant> _readOnlyCombatants;
+    private readonly IList<ICombatant> _combatants = new List<ICombatant>();
+    private readonly ReadOnlyCollection<ICombatant> _readOnlyCombatants;
 
     public CombatantRegistry()
     {
-        _readOnlyCombatants = _combatants.AsReadOnly();
+        _readOnlyCombatants = new ReadOnlyCollection<ICombatant>(_combatants);
     }
 
-    public IReadOnlyList<RegisteredCombatant> Combatants => _readOnlyCombatants;
+    public IReadOnlyList<ICombatant> Combatants => _readOnlyCombatants;
 
-    public void Register(RegisteredCombatant combatant)
+    public void Register(ICombatant combatant)
     {
         if (combatant == null)
         {
@@ -28,7 +28,7 @@ public sealed class CombatantRegistry : ICombatantRegistry
         _combatants.Add(combatant);
     }
 
-    public void Unregister(RegisteredCombatant combatant)
+    public void Unregister(ICombatant combatant)
     {
         if (combatant == null)
         {

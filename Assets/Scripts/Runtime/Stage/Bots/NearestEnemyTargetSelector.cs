@@ -3,9 +3,9 @@ using UnityEngine;
 
 public sealed class NearestEnemyTargetSelector : ITargetSelector
 {
-    public RegisteredCombatant SelectTarget(
-        RegisteredCombatant observer,
-        IReadOnlyList<RegisteredCombatant> candidates,
+    public ICombatant SelectTarget(
+        ICombatant observer,
+        IReadOnlyList<ICombatant> candidates,
         ITeamRelationshipService relationshipService)
     {
         if (observer == null || candidates == null || relationshipService == null)
@@ -13,13 +13,12 @@ public sealed class NearestEnemyTargetSelector : ITargetSelector
             return null;
         }
 
-        RegisteredCombatant nearest = null;
+        ICombatant nearest = null;
         float nearestSqrDistance = float.MaxValue;
         Vector3 observerPosition = observer.TargetTransform.position;
 
-        for (int i = 0; i < candidates.Count; i++)
+        foreach (ICombatant candidate in candidates)
         {
-            RegisteredCombatant candidate = candidates[i];
 
             if (candidate == null || candidate == observer || !candidate.IsTargetable)
             {

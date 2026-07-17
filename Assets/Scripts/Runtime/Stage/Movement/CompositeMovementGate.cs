@@ -13,9 +13,9 @@ public sealed class CompositeMovementGate : IMovementGate
     {
         get
         {
-            for (int i = 0; i < _gates.Count; i++)
+            foreach (IMovementGate gate in _gates)
             {
-                if (!_gates[i].CanMove)
+                if (!gate.CanMove)
                 {
                     return false;
                 }
@@ -31,9 +31,9 @@ public sealed class CompositeMovementGate : IMovementGate
         {
             float multiplier = 1f;
 
-            for (int i = 0; i < _gates.Count; i++)
+            foreach (IMovementGate gate in _gates)
             {
-                multiplier *= _gates[i].SpeedMultiplier;
+                multiplier *= gate.SpeedMultiplier;
             }
 
             return multiplier;

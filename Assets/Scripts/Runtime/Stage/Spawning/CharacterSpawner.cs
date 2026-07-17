@@ -3,18 +3,23 @@ using UnityEngine;
 
 public sealed class CharacterSpawner
 {
+    private const float DefaultBotReevaluateInterval = 0.25f;
+
     private readonly ICombatantRegistry _registry;
     private readonly ITargetSelector _targetSelector;
     private readonly ITeamRelationshipService _relationshipService;
+    private readonly BotTargetRunner _botTargetRunner;
 
     public CharacterSpawner(
         ICombatantRegistry registry,
         ITargetSelector targetSelector,
-        ITeamRelationshipService relationshipService)
+        ITeamRelationshipService relationshipService,
+        BotTargetRunner botTargetRunner)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _targetSelector = targetSelector ?? throw new ArgumentNullException(nameof(targetSelector));
         _relationshipService = relationshipService ?? throw new ArgumentNullException(nameof(relationshipService));
+        _botTargetRunner = botTargetRunner ?? throw new ArgumentNullException(nameof(botTargetRunner));
     }
 
     public RegisteredCombatant Spawn(CharacterSpawnEntry entry)
@@ -49,18 +54,7 @@ public sealed class CharacterSpawner
             entry.SpawnPoint.position,
             entry.SpawnPoint.rotation);
 
-        TeamMember teamMember = instance.GetComponent<TeamMember>();
         RegisteredCombatant registeredCombatant = instance.GetComponent<RegisteredCombatant>();
-        BotTargetController botTargetController = instance.GetComponent<BotTargetController>();
-
-        if (teamMember == null)
-        {
-            Debug.LogError(
-                $"{nameof(CharacterSpawner)} failed to spawn {entry.Prefab.name}: missing {nameof(TeamMember)}.",
-                instance);
-            UnityEngine.Object.Destroy(instance);
-            return null;
-        }
 
         if (registeredCombatant == null)
         {
@@ -71,12 +65,36 @@ public sealed class CharacterSpawner
             return null;
         }
 
-        teamMember.SetTeam(entry.Team);
-        registeredCombatant.Initialize(_registry);
-
-        if (botTargetController != null)
+        CombatCharacter character = instance.GetComponent<CombatCharacter>();
+        if (character == null)
         {
-            botTargetController.Initialize(_registry, _targetSelector, _relationshipService);
+            Debug.LogError(
+                $"{nameof(CharacterSpawner)} failed to spawn {entry.Prefab.name}: missing {nameof(CombatCharacter)}.",
+                instance);
+            UnityEngine.Object.Destroy(instance);
+            return null;
+        }
+
+        registeredCombatant.Initialize(_registry, entry.Team);
+
+        BotMovementInputSource botMovementInputSource = instance.GetComponent<BotMovementInputSource>();
+        if (botMovementInputSource != null)
+        {
+            BotTargetController botTargetController = new BotTargetController(
+                registeredCombatant,
+                botMovementInputSource,
+                _registry,
+                _targetSelector,
+                _relationshipService,
+                DefaultBotReevaluateInterval);
+
+            BotTargetBinding binding = instance.GetComponent<BotTargetBinding>();
+            if (binding == null)
+            {
+                binding = instance.AddComponent<BotTargetBinding>();
+            }
+
+            binding.Initialize(_botTargetRunner, botTargetController);
         }
 
         return registeredCombatant;

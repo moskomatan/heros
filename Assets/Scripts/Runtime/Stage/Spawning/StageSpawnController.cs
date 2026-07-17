@@ -5,12 +5,16 @@ public sealed class StageSpawnController : MonoBehaviour
 {
     [SerializeField] private List<CharacterSpawnEntry> _spawnEntries = new List<CharacterSpawnEntry>();
 
+    private readonly IList<GameObject> _spawnedInstances = new List<GameObject>();
+    private BotTargetRunner _botTargetRunner;
+
     private void Start()
     {
         CombatantRegistry registry = new CombatantRegistry();
         DifferentTeamRelationshipService relationshipService = new DifferentTeamRelationshipService();
         NearestEnemyTargetSelector targetSelector = new NearestEnemyTargetSelector();
-        CharacterSpawner spawner = new CharacterSpawner(registry, targetSelector, relationshipService);
+        _botTargetRunner = new BotTargetRunner();
+        CharacterSpawner spawner = new CharacterSpawner(registry, targetSelector, relationshipService, _botTargetRunner);
 
         for (int i = 0; i < _spawnEntries.Count; i++)
         {
@@ -21,7 +25,40 @@ public sealed class StageSpawnController : MonoBehaviour
                 continue;
             }
 
-            spawner.Spawn(entry);
+            RegisteredCombatant spawned = spawner.Spawn(entry);
+            if (spawned != null)
+            {
+                _spawnedInstances.Add(spawned.gameObject);
+            }
         }
+    }
+
+    private void Update()
+    {
+        if (_botTargetRunner == null)
+        {
+            return;
+        }
+
+        _botTargetRunner.Tick(Time.deltaTime);
+    }
+
+    private void OnDestroy()
+    {
+        if (_botTargetRunner != null)
+        {
+            _botTargetRunner.StopAll();
+            _botTargetRunner = null;
+        }
+
+        foreach (GameObject instance in _spawnedInstances)
+        {
+            if (instance != null)
+            {
+                Destroy(instance);
+            }
+        }
+
+        _spawnedInstances.Clear();
     }
 }

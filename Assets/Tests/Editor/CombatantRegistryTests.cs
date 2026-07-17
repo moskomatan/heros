@@ -5,7 +5,7 @@ using UnityEngine;
 public sealed class CombatantRegistryTests
 {
     private CombatantRegistry _registry;
-    private readonly List<GameObject> _createdObjects = new List<GameObject>();
+    private readonly IList<GameObject> _createdObjects = new List<GameObject>();
 
     [SetUp]
     public void SetUp()
@@ -16,11 +16,11 @@ public sealed class CombatantRegistryTests
     [TearDown]
     public void TearDown()
     {
-        for (int i = 0; i < _createdObjects.Count; i++)
+        foreach (GameObject createdObject in _createdObjects)
         {
-            if (_createdObjects[i] != null)
+            if (createdObject != null)
             {
-                Object.DestroyImmediate(_createdObjects[i]);
+                Object.DestroyImmediate(createdObject);
             }
         }
 
@@ -72,7 +72,7 @@ public sealed class CombatantRegistryTests
     [Test]
     public void Combatants_IsNotMutableList()
     {
-        Assert.That(_registry.Combatants, Is.Not.InstanceOf<List<RegisteredCombatant>>());
+        Assert.That(_registry.Combatants, Is.Not.InstanceOf<List<ICombatant>>());
     }
 
     private RegisteredCombatant CreateCombatant()
